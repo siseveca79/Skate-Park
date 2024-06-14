@@ -29,21 +29,30 @@ const hbs = create({
   allowProtoPropertiesByDefault: true,
 });
 
-app.engine('handlebars', engine({ handlebars: hbs, defaultLayout: 'main' }));
+
+app.engine('handlebars', engine({
+  handlebars: hbs,
+  defaultLayout: 'main',
+  runtimeOptions: {
+    allowProtoPropertiesByDefault: true,
+    allowProtoMethodsByDefault: true,
+  }
+}));
+
+
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
+
 // Sincroniza modelos con la base de datos
-sequelize.sync({ alter: true }) // Opciones según tu necesidad
+sequelize.sync({ alter: true })
   .then(() => {
     console.log('Modelos sincronizados con la base de datos.');
-    // Autentica la conexión con la base de datos
     return sequelize.authenticate();
   })
   .then(() => {
     console.log('Conexión establecida correctamente con la base de datos.');
-    // Inicia el servidor solo después de que la sincronización y la autenticación se completen
-    const PORT = process.env.PORT || 3001; // Cambiamos el puerto a 3001
+    const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en el puerto ${PORT}`);
     });
@@ -53,22 +62,13 @@ sequelize.sync({ alter: true }) // Opciones según tu necesidad
   });
 
 
+
 // Otro middleware y rutas
 app.use('/', routes);
 
 app.get('/favicon.ico', (req, res) => res.status(204));
 
-// Ruta para el inicio
-app.get('/', async (req, res) => {
-  try {
-    const skaters = await Skater.findAll();
-    console.log(JSON.stringify(skaters, null, 2));
-    res.render('index', { skaters });
-  } catch (error) {
-    console.error('Error al obtener skaters:', error);
-    res.status(500).send('Error interno al obtener skaters');
-  }
-});
+
 
 // Ruta para el registro de usuarios
 app.get('/register', (req, res) => {
@@ -108,6 +108,10 @@ app.post('/register', async (req, res) => {
     res.status(500).send("Error interno en el servidor");
   }
 });
+
+
+
+
 
 // Ruta para el inicio de sesión
 app.get('/login', (req, res) => {

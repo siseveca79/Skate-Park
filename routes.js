@@ -20,21 +20,29 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Rutas
+
+
 router.get('/', async (req, res) => {
   try {
+    console.log("Intentando obtener skaters...");
     const skaters = await Skater.findAll();
-    res.render('index', { skaters });
+    console.log("Skaters obtenidos de la base de datos:", skaters);
+
+    res.render('index', { skaters: skaters.map(skater => skater.get({ plain: true })) });
   } catch (error) {
     console.error('Error al obtener skaters:', error);
     res.status(500).send('Error interno al obtener skaters');
   }
 });
 
+
+
+
+
+
 router.get('/login', (req, res) => {
   res.render('login');
 });
-
 
 
 // Ruta POST para manejar el inicio de sesión
@@ -42,16 +50,24 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Valida los datos del formulario
+    // Validar los datos del formulario utilizando un esquema de validación
     loginSchema.parse({ email, password });
 
+    // Buscar al skater por su email en la base de datos
     const skater = await Skater.findOne({ where: { email } });
 
+    // Verificar si existe el skater y si la contraseña es correcta
     if (skater && await bcrypt.compare(password, skater.password)) {
+      // Generar un token de sesión
       const token = jwt.sign({ id: skater.id, email: skater.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      // Establecer la cookie con el token
       res.cookie('token', token, { httpOnly: true });
+
+      // Redirigir al usuario a su perfil
       res.redirect('/profile');
     } else {
+      // Si las credenciales no son válidas, redirigir de nuevo al login con un mensaje de error
       res.redirect('/login');
     }
   } catch (error) {
@@ -69,10 +85,10 @@ router.post('/login', async (req, res) => {
 
 
 
+
 router.get('/register', (req, res) => {
   res.render('registro');
 });
-
 router.post('/register', async (req, res) => {
   const { email, nombre, password, anos_experiencia, especialidad } = req.body;
   // Verifica si hay archivos adjuntos
