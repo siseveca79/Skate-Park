@@ -12,6 +12,8 @@ const sequelize = require('./config/database');
 const Skater = require('./models/Skater'); // Importa el modelo Skater
 const routes = require('./routes');
 
+
+
 const app = express();
 
 // Configuración de middlewares
