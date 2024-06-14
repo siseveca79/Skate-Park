@@ -1,0 +1,34 @@
+<h1>Skate Park</h1>
+<div class="py-4">
+  <h2>Administración</h2>
+  <hr class="w-50">
+  <table class="table w-50 m-auto">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Foto</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Años de experiencia</th>
+        <th scope="col">Especialidad</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each skaters}}
+      <tr>
+        <th scope="row">{{this.id}}</th>
+        <td><img src="{{this.foto}}" alt="Foto de {{this.nombre}}" width="50"></td>
+        <td>{{this.nombre}}</td>
+        <td>{{this.anos_experiencia}}</td>
+        <td>{{this.especialidad}}</td>
+        <td>
+          <form action="/admin" method="POST">
+            <input type="hidden" name="id" value="{{this.id}}">
+            <input type="checkbox" name="estado" {{#if this.estado}}checked{{/if}} onchange="this.form.submit()">
+          </form>
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>

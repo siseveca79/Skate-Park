@@ -1,0 +1,129 @@
+<h1>Skate Park</h1>
+<div class="py-4">
+  <h2>Registro</h2>
+  <hr class="w-50">
+  <form id="registerForm" action="/register" method="POST" enctype="multipart/form-data">
+    <div class="form-group row w-50 m-auto">
+      <div class="form-group col-12 col-sm-6">
+        <label>Email</label>
+        <input id="email" class="form-control m-auto" name="email" required>
+        <span class="error-message" id="emailError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Nombre</label>
+        <input id="nombre" class="form-control m-auto" name="nombre" required>
+        <span class="error-message" id="nombreError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Password</label>
+        <input type="password" id="password" class="form-control m-auto" name="password" required>
+        <button type="button" onclick="togglePasswordVisibility('password')">Mostrar/Ocultar</button>
+        <span class="error-message" id="passwordError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Repita la password</label>
+        <input type="password" id="password_repeat" class="form-control m-auto" name="password_repeat" required>
+        <button type="button" onclick="togglePasswordVisibility('password_repeat')">Mostrar/Ocultar</button>
+        <span class="error-message" id="passwordRepeatError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Años de experiencia</label>
+        <input id="anos_experiencia" class="form-control m-auto" name="anos_experiencia" required>
+        <span class="error-message" id="anosExperienciaError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Especialidad</label>
+        <input id="especialidad" class="form-control m-auto" name="especialidad" required>
+        <span class="error-message" id="especialidadError"></span>
+      </div>
+      <div class="form-group col-12 col-sm-6">
+        <label>Foto</label>
+        <input type="file" id="foto" class="form-control m-auto" name="foto">
+        <span class="error-message" id="fotoError"></span>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-success">Registrar</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/zod@3.11.6/dist/zod.min.js" onload="initZod()"></script>
+<script>
+  function initZod() {
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const formData = new FormData(this);
+      const formProps = Object.fromEntries(formData);
+
+      try {
+        const registerSchema = z.object({
+          email: z.string().email({ message: "El email no es válido" }),
+          nombre: z.string()
+            .nonempty({ message: "El nombre es requerido" })
+            .min(2, { message: "El nombre debe tener al menos 2 caracteres" })
+            .regex(/^[a-zA-Z\s]+$/, { message: "El nombre solo puede contener letras y espacios" }),
+          password: z.string()
+            .min(6, { message: "La contraseña debe tener al menos 6 caracteres" })
+            .regex(/[A-Za-z]/, { message: "La contraseña debe contener al menos una letra" })
+            .regex(/[0-9]/, { message: "La contraseña debe contener al menos un número" })
+            .regex(/[\W_]/, { message: "La contraseña debe contener al menos un carácter especial" }),
+          password_repeat: z.string().min(6, { message: "Repetir la contraseña es requerido" }),
+          anos_experiencia: z.preprocess((val) => parseInt(val, 10), z.number().int().min(0, { message: "Los años de experiencia deben ser un número positivo" })),
+          especialidad: z.string()
+            .nonempty({ message: "La especialidad es requerida" })
+            .min(2, { message: "La especialidad debe tener al menos 2 caracteres" })
+            .regex(/^[a-zA-Z\s]+$/, { message: "La especialidad solo puede contener letras y espacios" }),
+          foto: z.any().optional(),
+        }).refine((data) => data.password === data.password_repeat, {
+          message: "Las contraseñas no coinciden",
+          path: ["password_repeat"],
+        });
+
+        const validationResult = registerSchema.safeParse(formProps);
+
+        if (!validationResult.success) {
+          const errors = validationResult.error.format();
+
+          // Clear previous error messages
+          document.querySelectorAll('.error-message').forEach(function(element) {
+            element.textContent = '';
+          });
+
+          // Display error messages
+          for (const key in errors) {
+            if (errors.hasOwnProperty(key)) {
+              document.getElementById(`${key}Error`).textContent = errors[key]._errors.join(', ');
+            }
+          }
+        } else {
+          this.submit();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+
+    document.getElementById('password').addEventListener('input', validatePasswords);
+    document.getElementById('password_repeat').addEventListener('input', validatePasswords);
+  }
+
+  function validatePasswords() {
+    const password = document.getElementById('password').value;
+    const passwordRepeat = document.getElementById('password_repeat').value;
+
+    if (password !== passwordRepeat) {
+      document.getElementById('passwordRepeatError').textContent = 'Las contraseñas no coinciden';
+    } else {
+      document.getElementById('passwordRepeatError').textContent = '';
+    }
+  }
+
+  function togglePasswordVisibility(id) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') {
+      input.type = 'text';
+    } else {
+      input.type = 'password';
+    }
+  }
+</script>
