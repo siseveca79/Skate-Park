@@ -1,53 +1,75 @@
-<h1>Skate Park</h1>
-<div class="py-4">
-  <h2>Bienvenidos index</h2>
-
-
-  <div class="my-3">
-            <a href="/login" class="btn btn-primary mr-2">Iniciar sesión</a>
-            <a href="/register" class="btn btn-success">Registrarse</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skate Park</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .table img {
+            width: 100px; /* Tamaño fijo de 100px */
+            height: 100px; /* Tamaño fijo de 100px */
+            object-fit: cover; /* Mantiene la proporción de la imagen */
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100 justify-content-center align-items-center">
+    <div class="container text-center mt-5">
+        <h1>Skate Park</h1>
+        <div class="py-4">
+            <h2>Bienvenidos a Skate Park</h2>
+            <div class="my-3">
+                <a href="/login" class="btn btn-primary mr-2">Iniciar sesión</a>
+                <a href="/register" class="btn btn-success">Registrarse</a>
+            </div>
+            <hr class="w-50 mx-auto">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Foto</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Años de experiencia</th>
+                            <th>Especialidad</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if skaters.length}}
+                            {{#each skaters}}
+                            <tr>
+                                <td>
+                                    {{#if this.foto}}
+                                        <img src="{{this.foto}}" alt="Foto de {{this.nombre}}">
+                                    {{else}}
+                                        No disponible
+                                    {{/if}}
+                                </td>
+                                <td>{{this.nombre}}</td>
+                                <td>{{this.email}}</td>
+                                <td>{{this.anos_experiencia}}</td>
+                                <td>{{this.especialidad}}</td>
+                                <td>{{#if this.estado}}Activo{{else}}Inactivo{{/if}}</td>
+                            </tr>
+                            {{/each}}
+                        {{else}}
+                            <tr>
+                                <td colspan="6">No hay skaters disponibles.</td>
+                            </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
+            </div>
         </div>
-  <hr class="w-50">
-  <div class="container">
-    <div class="row">
-      <div class="col">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Foto</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Años de experiencia</th>
-              <th>Especialidad</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#if skaters.length}}
-              {{#each skaters}}
-              <tr>
-                <td>
-                  {{#if this.foto}}
-                    <img src="{{this.foto}}" alt="Foto de {{this.nombre}}" style="max-width: 100px;">
-                  {{else}}
-                    No disponible
-                  {{/if}}
-                </td>
-                <td>{{this.nombre}}</td>
-                <td>{{this.email}}</td>
-                <td>{{this.anos_experiencia}}</td>
-                <td>{{this.especialidad}}</td>
-                <td>{{#if this.estado}}Activo{{else}}Inactivo{{/if}}</td>
-              </tr>
-              {{/each}}
-            {{else}}
-              <tr>
-                <td colspan="6">No hay skaters disponibles.</td>
-              </tr>
-            {{/if}}
-          </tbody>
-        </table>
-      </div>
     </div>
-  </div>
-</div>
+
+    <!-- Scripts de jQuery y Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
