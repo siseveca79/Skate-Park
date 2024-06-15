@@ -11,8 +11,8 @@ const cookieParser = require('cookie-parser');
 const sequelize = require('./config/database');
 const Skater = require('./models/Skater'); // Importa el modelo Skater
 const routes = require('./routes');
-
-
+const profileSchema = require('./validation/profileValidation');
+const loginSchema = require('./validation/loginValidation');
 
 const app = express();
 
@@ -60,6 +60,33 @@ sequelize.sync({ alter: true })
   .catch((error) => {
     console.error('Error al sincronizar modelos con la base de datos:', error);
   });
+
+
+
+
+
+// Middleware para verificar el token JWT
+function authenticateToken(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.redirect('/login');
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.redirect('/login');
+    req.user = user;
+    next();
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -145,29 +172,57 @@ app.post('/login', async (req, res) => {
     }
   } catch (error) {
     console.error("Error en el inicio de sesión:", error);
-    res.render('login', { error: { message: 'Error al iniciar sesión. Por favor, intente de nuevo.' } }); // Renderiza la vista de login con el mensaje de error
+    res.render('login', { error: { message: 'Error al iniciar sesión. Por favor, intente de nuevo.' } });
   }
 });
 
 
+
+
+
+
+
+
+
+
+
 // Ruta para ver el perfil del usuario
-app.get('/profile', async (req, res) => {
-  const token = req.cookies.token;
-
+app.get('/profile', authenticateToken, async (req, res) => {
   try {
-    if (!token) return res.redirect('/login');
-
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-      if (err) return res.redirect('/login');
-
-      const skater = await Skater.findByPk(decoded.id);
-      res.render('datos', { skater });
-    });
+    const skater = await Skater.findByPk(req.user.id);
+    if (!skater) throw new Error('Skater no encontrado');
+    res.render('datos', { skater });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     res.status(500).send("Error interno en el servidor");
   }
 });
+
+
+// Ruta POST para actualizar el perfil del usuario
+app.post('/profile', authenticateToken, async (req, res) => {
+  const { nombre, anos_experiencia, especialidad } = req.body;
+
+  try {
+    // Validar los datos del formulario utilizando el esquema de validación
+    profileSchema.parse({ nombre, anos_experiencia: Number(anos_experiencia), especialidad });
+
+    await Skater.update(
+      { nombre, anos_experiencia: Number(anos_experiencia), especialidad },
+      { where: { id: req.user.id } }
+    );
+
+    // Recargar el perfil con un mensaje de éxito
+    const skater = await Skater.findByPk(req.user.id);
+    res.render('datos', { skater, successMessage: 'Cambios guardados con éxito.' });
+  } catch (error) {
+    console.error("Error al actualizar perfil:", error);
+    res.status(500).send("Error interno en el servidor");
+  }
+});
+
+
+
 
 
 
@@ -179,11 +234,11 @@ app.post('/logout', (req, res) => {
 });
 
 
-
+/*
 app.listen(3002, () => {
   console.log('Servidor corriendo en el puerto 3001');
 });
-
+*/
 /* Inicia el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
