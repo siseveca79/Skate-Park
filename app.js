@@ -11,8 +11,8 @@ const cookieParser = require('cookie-parser');
 const sequelize = require('./config/database');
 const Skater = require('./models/Skater'); // Importa el modelo Skater
 const routes = require('./routes');
-const profileSchema = require('./validation/profileValidation');
-const loginSchema = require('./validation/loginValidation');
+const loginSchema = require('./validation/loginValidation'); // Importa la validación de login
+const profileSchema = require('./validation/profileValidation'); // Importa la validación del perfil
 
 const app = express();
 
@@ -29,7 +29,6 @@ const hbs = create({
   allowProtoPropertiesByDefault: true,
 });
 
-
 app.engine('handlebars', engine({
   handlebars: hbs,
   defaultLayout: 'main',
@@ -39,10 +38,8 @@ app.engine('handlebars', engine({
   }
 }));
 
-
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
-
 
 // Sincroniza modelos con la base de datos
 sequelize.sync({ alter: true })
@@ -61,10 +58,6 @@ sequelize.sync({ alter: true })
     console.error('Error al sincronizar modelos con la base de datos:', error);
   });
 
-
-
-
-
 // Middleware para verificar el token JWT
 function authenticateToken(req, res, next) {
   const token = req.cookies.token;
@@ -76,69 +69,6 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Otro middleware y rutas
-app.use('/', routes);
-
-app.get('/favicon.ico', (req, res) => res.status(204));
-
-
-
-// Ruta para el registro de usuarios
-app.get('/register', (req, res) => {
-  res.render('registro');
-});
-
-// Ruta POST para procesar el registro
-app.post('/register', async (req, res) => {
-  const { email, nombre, password, anos_experiencia, especialidad } = req.body;
-
-  // Verifica si hay archivos adjuntos
-  if (!req.files || !req.files.foto) {
-    return res.status(400).send('No se ha enviado ninguna imagen.');
-  }
-
-  const foto = req.files.foto;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
-  try {
-    // Mueve el archivo al directorio deseado
-    await foto.mv(`./public/uploads/${foto.name}`);
-
-    // Inserta el nuevo skater en la base de datos
-    await Skater.create({
-      email,
-      nombre,
-      password: hashedPassword,
-      anos_experiencia,
-      especialidad,
-      foto: `/uploads/${foto.name}`,
-      estado: false
-    });
-
-    res.redirect('/login');
-  } catch (error) {
-    console.error("Error al registrar skater:", error);
-    res.status(500).send("Error interno en el servidor");
-  }
-});
-
-
-
-
 
 // Ruta para el inicio de sesión
 app.get('/login', (req, res) => {
@@ -176,22 +106,57 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Ruta para el registro de usuarios
+app.get('/register', (req, res) => {
+  res.render('registro');
+});
 
+app.post('/register', async (req, res) => {
+  const { email, nombre, password, anos_experiencia, especialidad } = req.body;
 
+  // Verifica si hay archivos adjuntos
+  if (!req.files || !req.files.foto) {
+    return res.status(400).send('No se ha enviado ninguna imagen.');
+  }
 
+  const foto = req.files.foto;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
+  try {
+    // Mueve el archivo al directorio deseado
+    await foto.mv(`./public/uploads/${foto.name}`);
 
+    // Inserta el nuevo skater en la base de datos
+    await Skater.create({
+      email,
+      nombre,
+      password: hashedPassword,
+      anos_experiencia,
+      especialidad,
+      foto: `/uploads/${foto.name}`,
+      estado: false
+    });
 
-
-
-
+    res.redirect('/login');
+  } catch (error) {
+    console.error("Error al registrar skater:", error);
+    res.status(500).send("Error interno en el servidor");
+  }
+});
 
 // Ruta para ver el perfil del usuario
-app.get('/profile', authenticateToken, async (req, res) => {
+app.get('/profile', authenticateToken, (req, res) => {
   try {
-    const skater = await Skater.findByPk(req.user.id);
-    if (!skater) throw new Error('Skater no encontrado');
-    res.render('datos', { skater });
+    const { id, email, nombre } = req.user;
+    Skater.findByPk(id)
+      .then(skater => {
+        if (!skater) throw new Error('Skater no encontrado');
+        res.render('datos', { skater: skater.get({ plain: true }) });
+      })
+      .catch(error => {
+        console.error("Error al obtener perfil:", error);
+        res.status(500).send("Error interno en el servidor");
+      });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     res.status(500).send("Error interno en el servidor");
@@ -221,34 +186,15 @@ app.post('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 // Agregar esta ruta para manejar el logout
 app.post('/logout', (req, res) => {
   res.clearCookie('token'); // Borra la cookie de token
   res.redirect('/'); // Redirige al usuario a la página principal
 });
 
+// Otro middleware y rutas
+app.use('/', routes);
 
-/*
-app.listen(3002, () => {
-  console.log('Servidor corriendo en el puerto 3001');
-});
-*/
-/* Inicia el servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-  try {
-    await sequelize.authenticate();
-    console.log('Conexión establecida correctamente con la base de datos.');
-  } catch (error) {
-    console.error('Error al conectar con la base de datos:', error);
-  }
-});*/
+app.get('/favicon.ico', (req, res) => res.status(204));
 
 module.exports = app;
