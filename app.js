@@ -118,24 +118,37 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
+// Ruta POST para manejar el inicio de sesión
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Validar los datos del formulario utilizando el esquema de validación
+    loginSchema.parse({ email, password });
+
+    // Buscar al skater por su email en la base de datos
     const skater = await Skater.findOne({ where: { email } });
 
+    // Verificar si existe el skater y si la contraseña es correcta
     if (skater && await bcrypt.compare(password, skater.password)) {
+      // Generar un token de sesión
       const token = jwt.sign({ id: skater.id, email: skater.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      // Establecer la cookie con el token
       res.cookie('token', token, { httpOnly: true });
+
+      // Redirigir al usuario a su perfil
       res.redirect('/profile');
     } else {
-      res.redirect('/login');
+      // Si las credenciales no son válidas, renderizar de nuevo el login con un mensaje de error
+      res.render('login', { error: { message: 'Credenciales incorrectas. Por favor, intente de nuevo.' } });
     }
   } catch (error) {
     console.error("Error en el inicio de sesión:", error);
-    res.status(500).send("Error interno en el servidor");
+    res.render('login', { error: { message: 'Error al iniciar sesión. Por favor, intente de nuevo.' } }); // Renderiza la vista de login con el mensaje de error
   }
 });
+
 
 // Ruta para ver el perfil del usuario
 app.get('/profile', async (req, res) => {
@@ -154,6 +167,15 @@ app.get('/profile', async (req, res) => {
     console.error("Error al obtener perfil:", error);
     res.status(500).send("Error interno en el servidor");
   }
+});
+
+
+
+
+// Agregar esta ruta para manejar el logout
+app.post('/logout', (req, res) => {
+  res.clearCookie('token'); // Borra la cookie de token
+  res.redirect('/'); // Redirige al usuario a la página principal
 });
 
 

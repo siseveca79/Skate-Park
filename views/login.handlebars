@@ -1,52 +1,65 @@
-<h1>Iniciar sesión</h1>
-{{#if error}}
-  <div class="alert alert-danger" role="alert">
-    {{error.message}}
-  </div>
-{{/if}}
-<form id="loginForm" action="/login" method="POST">
-  <div class="form-group">
-    <label for="email">Email</label>
-    <input type="email" class="form-control" id="email" name="email" required>
-    <!-- Mensaje de error para el email -->
-    <small id="emailError" class="text-danger"></small>
-  </div>
-  <div class="form-group">
-    <label for="password">Contraseña</label>
-    <input type="password" class="form-control" id="password" name="password" required>
-    <!-- Mensaje de error para la contraseña -->
-    <small id="passwordError" class="text-danger"></small>
-  </div>
-  <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Iniciar sesión</h1>
+        {{#if error}}
+          <div class="alert alert-danger" role="alert">
+            {{error.message}}
+          </div>
+        {{/if}}
+        <form id="loginForm" action="/login" method="POST">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+            <!-- Mensaje de error para el email -->
+            <small id="emailError" class="text-danger"></small>
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+            <!-- Mensaje de error para la contraseña -->
+            <small id="passwordError" class="text-danger"></small>
+          </div>
+          <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+        </form>
+    </div>
 
-<script>
-  // Validación del lado del cliente
-  const form = document.getElementById('loginForm');
-  form.addEventListener('submit', function(event) {
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const emailError = document.getElementById('emailError');
-    const passwordError = document.getElementById('passwordError');
+    <script>
+      // Validación del lado del cliente
+      const form = document.getElementById('loginForm');
+      form.addEventListener('submit', function(event) {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
 
-    emailError.textContent = '';
-    passwordError.textContent = '';
+        emailError.textContent = '';
+        passwordError.textContent = '';
 
-    if (!isValidEmail(emailInput.value)) {
-      emailError.textContent = 'El email no es válido';
-      event.preventDefault(); // Evita que se envíe el formulario
-    }
+        if (!isValidEmail(emailInput.value)) {
+          emailError.textContent = 'El email no es válido';
+          event.preventDefault(); // Evita que se envíe el formulario
+        }
 
-    if (passwordInput.value.length < 6) {
-      passwordError.textContent = 'La contraseña debe tener al menos 6 caracteres';
-      event.preventDefault(); // Evita que se envíe el formulario
-    }
-  });
+        if (passwordInput.value.length < 6) {
+          passwordError.textContent = 'La contraseña debe tener al menos 6 caracteres';
+          event.preventDefault(); // Evita que se envíe el formulario
+        }
+      });
 
-  // Función para validar el email
-  function isValidEmail(email) {
-    // Expresión regular para validar el email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-</script>
+      // Función para validar el email
+      function isValidEmail(email) {
+        // Expresión regular para validar el email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+    </script>
+</body>
+</html>
