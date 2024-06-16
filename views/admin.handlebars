@@ -1,5 +1,3 @@
-<!-- admin.handlebars -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,6 +12,12 @@
         <div class="py-4">
             <h2 class="text-center">Administración</h2>
             <hr class="w-50 mx-auto">
+            <!-- Botón de logout -->
+            <div class="text-right mb-3">
+                <form action="/logout" method="POST">
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            </div>
             <table class="table w-75 m-auto">
                 <thead class="thead-dark">
                     <tr>

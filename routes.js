@@ -146,7 +146,16 @@ router.get('/admin', authenticateToken, async (req, res) => {
   }
 });
 
-// Ruta PUT para actualizar el estado de un skater por ID
+
+
+
+
+
+
+
+
+
+// Tu ruta PUT debe ser algo como esto:
 router.put('/admin/update/:id', authenticateToken, async (req, res) => {
   const skaterId = req.params.id;
   const newState = req.body.estado === 'on'; // Convierte el estado en booleano
@@ -165,6 +174,9 @@ router.put('/admin/update/:id', authenticateToken, async (req, res) => {
     res.status(500).send('Error interno del servidor');
   }
 });
+
+
+
 
 router.post('/admin', async (req, res) => {
   const { id, estado } = req.body;

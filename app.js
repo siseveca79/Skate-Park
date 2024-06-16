@@ -17,6 +17,9 @@ const { authenticateToken } = require('./authMiddleware');
 
 const app = express();
 
+
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
 // Configuración de middlewares
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
