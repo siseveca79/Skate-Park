@@ -22,10 +22,7 @@ VARCHAR(25) NOT NULL, password VARCHAR(25) NOT NULL, anos_experiencia
 INT NOT NULL, especialidad VARCHAR(50) NOT NULL, foto VARCHAR(255) NOT
 NULL, estado BOOLEAN NOT NULL);
 
-# Usuarios
-
-## Password para todos.
-Simi1935
+# Crea los Usuarios
 
 ## Emails para crear en la tabla.
 - danny@gmail.com
@@ -33,6 +30,8 @@ Simi1935
 - tony@gmail.com
 - admin@gmail.com
 
+## Password para todos.
+Simi1935
 
 # Resultados
 
