@@ -5,20 +5,9 @@ const jwt = require('jsonwebtoken');
 const Skater = require('./models/Skater'); // Asegúrate de importar correctamente Skater
 const { z } = require('zod');
 const loginSchema = require('./validation/loginValidation');
-const registerSchema = require('./validation/validation');
+const registerSchema = require('./validation/validation').registerSchema;
 const profileSchema = require('./validation/profileValidation');
-
-// Middleware para proteger rutas
-function authenticateToken(req, res, next) {
-  const token = req.cookies.token;
-  if (!token) return res.redirect('/login');
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
+const { authenticateToken } = require('./authMiddleware');
 
 router.get('/', async (req, res) => {
   try {
@@ -73,17 +62,20 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { email, nombre, password, anos_experiencia, especialidad } = req.body;
-
-  // Verifica si hay archivos adjuntos
-  if (!req.files || !req.files.foto) {
-    return res.status(400).send('No se ha enviado ninguna imagen.');
-  }
-
-  const foto = req.files.foto;
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const { email, nombre, password, password_repeat, anos_experiencia, especialidad } = req.body;
 
   try {
+    // Validar los datos del formulario utilizando el esquema de validación
+    registerSchema.parse({ email, nombre, password, password_repeat, anos_experiencia, especialidad, foto: req.files ? req.files.foto : null });
+
+    // Verifica si hay archivos adjuntos
+    if (!req.files || !req.files.foto) {
+      return res.status(400).send('No se ha enviado ninguna imagen.');
+    }
+
+    const foto = req.files.foto;
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
     // Mueve el archivo al directorio deseado
     await foto.mv(`./public/uploads/${foto.name}`);
 
@@ -105,6 +97,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Ruta protegida que requiere autenticación
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const skater = await Skater.findByPk(req.user.id);
@@ -142,13 +135,34 @@ router.post('/logout', (req, res) => {
   res.redirect('/'); // Redirige al usuario a la página principal
 });
 
-router.get('/admin', async (req, res) => {
+// Ruta GET para la página de administración
+router.get('/admin', authenticateToken, async (req, res) => {
   try {
     const skaters = await Skater.findAll();
     res.render('admin', { skaters });
   } catch (error) {
     console.error('Error al obtener skaters:', error);
     res.status(500).send('Error interno al obtener skaters');
+  }
+});
+
+// Ruta PUT para actualizar el estado de un skater por ID
+router.put('/admin/update/:id', authenticateToken, async (req, res) => {
+  const skaterId = req.params.id;
+  const newState = req.body.estado === 'on'; // Convierte el estado en booleano
+
+  try {
+    const skater = await Skater.findByPk(skaterId);
+    if (!skater) {
+      return res.status(404).send('Skater no encontrado');
+    }
+
+    skater.estado = newState;
+    await skater.save();
+    res.redirect('/admin'); // Redirige a la página de administración después de actualizar
+  } catch (error) {
+    console.error('Error al actualizar el estado del skater:', error);
+    res.status(500).send('Error interno del servidor');
   }
 });
 
@@ -162,5 +176,30 @@ router.post('/admin', async (req, res) => {
     res.status(500).send("Error interno en el servidor");
   }
 });
+
+// Middleware para redirigir a admin.handlebars si el usuario es admin
+async function redirectAdmin(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.redirect('/login');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const skater = await Skater.findByPk(decoded.id);
+
+    if (!skater) {
+      return res.redirect('/login');
+    }
+
+    // Redirigir a admin.handlebars si es admin
+    if (skater.email === 'admin@gmail.com') {
+      return res.redirect('/admin');
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error al verificar token:', error);
+    res.redirect('/login');
+  }
+}
 
 module.exports = router;

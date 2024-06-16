@@ -13,6 +13,7 @@ const Skater = require('./models/Skater'); // Importa el modelo Skater
 const routes = require('./routes');
 const loginSchema = require('./validation/loginValidation'); // Importa la validación de login
 const profileSchema = require('./validation/profileValidation'); // Importa la validación del perfil
+const { authenticateToken } = require('./authMiddleware');
 
 const app = express();
 
@@ -58,16 +59,30 @@ sequelize.sync({ alter: true })
     console.error('Error al sincronizar modelos con la base de datos:', error);
   });
 
-// Middleware para verificar el token JWT
-function authenticateToken(req, res, next) {
+// Middleware para redirigir a admin.handlebars si el usuario es admin
+async function redirectAdmin(req, res, next) {
   const token = req.cookies.token;
   if (!token) return res.redirect('/login');
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.redirect('/login');
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const skater = await Skater.findByPk(decoded.id);
+
+    if (!skater) {
+      return res.redirect('/login');
+    }
+
+    // Redirigir a admin.handlebars si es admin
+    if (skater.email === 'admin@gmail.com') {
+      return res.redirect('/admin');
+    }
+
+    req.user = skater;
     next();
-  });
+  } catch (error) {
+    console.error('Error al verificar token:', error);
+    res.redirect('/login');
+  }
 }
 
 // Ruta para el inicio de sesión
@@ -145,24 +160,17 @@ app.post('/register', async (req, res) => {
 });
 
 // Ruta para ver el perfil del usuario
-app.get('/profile', authenticateToken, (req, res) => {
+app.get('/profile', redirectAdmin, authenticateToken, async (req, res) => {
   try {
     const { id, email, nombre } = req.user;
-    Skater.findByPk(id)
-      .then(skater => {
-        if (!skater) throw new Error('Skater no encontrado');
-        res.render('datos', { skater: skater.get({ plain: true }) });
-      })
-      .catch(error => {
-        console.error("Error al obtener perfil:", error);
-        res.status(500).send("Error interno en el servidor");
-      });
+    const skater = await Skater.findByPk(id);
+    if (!skater) throw new Error('Skater no encontrado');
+    res.render('datos', { skater: skater.get({ plain: true }) });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     res.status(500).send("Error interno en el servidor");
   }
 });
-
 
 // Ruta POST para actualizar el perfil del usuario
 app.post('/profile', authenticateToken, async (req, res) => {
@@ -186,7 +194,7 @@ app.post('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Agregar esta ruta para manejar el logout
+// Ruta para manejar el logout
 app.post('/logout', (req, res) => {
   res.clearCookie('token'); // Borra la cookie de token
   res.redirect('/'); // Redirige al usuario a la página principal

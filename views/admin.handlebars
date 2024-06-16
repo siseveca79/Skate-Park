@@ -1,34 +1,53 @@
-<h1>Skate Park</h1>
-<div class="py-4">
-  <h2>Administración</h2>
-  <hr class="w-50">
-  <table class="table w-50 m-auto">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Foto</th>
-        <th scope="col">Nombre</th>
-        <th scope="col">Años de experiencia</th>
-        <th scope="col">Especialidad</th>
-        <th scope="col">Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each skaters}}
-      <tr>
-        <th scope="row">{{this.id}}</th>
-        <td><img src="{{this.foto}}" alt="Foto de {{this.nombre}}" width="50"></td>
-        <td>{{this.nombre}}</td>
-        <td>{{this.anos_experiencia}}</td>
-        <td>{{this.especialidad}}</td>
-        <td>
-          <form action="/admin" method="POST">
-            <input type="hidden" name="id" value="{{this.id}}">
-            <input type="checkbox" name="estado" {{#if this.estado}}checked{{/if}} onchange="this.form.submit()">
-          </form>
-        </td>
-      </tr>
-      {{/each}}
-    </tbody>
-  </table>
-</div>
+<!-- admin.handlebars -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Skate Park</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Skate Park</h1>
+        <div class="py-4">
+            <h2 class="text-center">Administración</h2>
+            <hr class="w-50 mx-auto">
+            <table class="table w-75 m-auto">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Foto</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Años de experiencia</th>
+                        <th scope="col">Especialidad</th>
+                        <th scope="col">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each skaters}}
+                    <tr>
+                        <th scope="row">{{@index}}</th>
+                        <td><img src="{{this.foto}}" alt="Foto de {{this.nombre}}" width="50"></td>
+                        <td>{{this.nombre}}</td>
+                        <td>{{this.anos_experiencia}}</td>
+                        <td>{{this.especialidad}}</td>
+                        <td>
+                            <form action="/admin/update/{{this.id}}" method="POST">
+                                <input type="hidden" name="_method" value="PUT">
+                                <input type="checkbox" name="estado" {{#if this.estado}}checked{{/if}} onchange="this.form.submit()">
+                            </form>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts de jQuery y Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
