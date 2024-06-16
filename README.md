@@ -11,20 +11,32 @@ npm install bcrypt@^5.1.1 body-parser@^1.20.2 cookie-parser@^1.4.6 dotenv@^16.4.
 
 
 
+# DB 
+
+## CREA LA BASE DE DATOS 
+- CREATE DATABASE skatepark;
+
+## CREA LA TABLA TAL CUAL. 
+- CREATE TABLE Skaters (id SERIAL, email VARCHAR(50) NOT NULL, nombre
+VARCHAR(25) NOT NULL, password VARCHAR(25) NOT NULL, anos_experiencia
+INT NOT NULL, especialidad VARCHAR(50) NOT NULL, foto VARCHAR(255) NOT
+NULL, estado BOOLEAN NOT NULL);
+
 # Usuarios
 
-Para todos lo usuarios Password: Simi1935
+## Password para todos.
+Simi1935
 
-danny@gmail.com
-evelien@gmail.com
-tony@gmail.com
-admin@gmail.com
+## Emails para crear en la tabla.
+- danny@gmail.com
+- evelien@gmail.com
+- tony@gmail.com
+- admin@gmail.com
 
 
 # Resultados
 
 ![Logo de mi proyecto](/index.png)
-
 
 ![Logo de mi proyecto](/loginDanny.png)
 
