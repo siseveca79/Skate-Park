@@ -7,6 +7,7 @@ const { create } = require('handlebars');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const methodOverride = require('method-override');
 const cookieParser = require('cookie-parser');
 const sequelize = require('./config/database');
 const Skater = require('./models/Skater'); // Importa el modelo Skater
@@ -18,7 +19,7 @@ const { authenticateToken } = require('./authMiddleware');
 const app = express();
 
 
-const methodOverride = require('method-override');
+
 app.use(methodOverride('_method'));
 // Configuración de middlewares
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -26,12 +27,18 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(fileUpload());
 app.use(express.static(path.join(__dirname, 'public')));
+// Middleware para sobrescribir métodos HTTP
+app.use(methodOverride('_method'));
+
+
 
 // Configuración de Handlebars
 const hbs = create({
   allowProtoMethodsByDefault: true,
   allowProtoPropertiesByDefault: true,
 });
+
+
 
 app.engine('handlebars', engine({
   handlebars: hbs,

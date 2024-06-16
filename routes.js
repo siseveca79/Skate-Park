@@ -151,30 +151,31 @@ router.get('/admin', authenticateToken, async (req, res) => {
 
 
 
-
-
-
-
-// Tu ruta PUT debe ser algo como esto:
-router.put('/admin/update/:id', authenticateToken, async (req, res) => {
-  const skaterId = req.params.id;
-  const newState = req.body.estado === 'on'; // Convierte el estado en booleano
-
-  try {
-    const skater = await Skater.findByPk(skaterId);
-    if (!skater) {
-      return res.status(404).send('Skater no encontrado');
-    }
-
-    skater.estado = newState;
-    await skater.save();
-    res.redirect('/admin'); // Redirige a la página de administración después de actualizar
-  } catch (error) {
-    console.error('Error al actualizar el estado del skater:', error);
-    res.status(500).send('Error interno del servidor');
-  }
+// Ruta para manejar el logout
+router.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+      if (err) {
+          return res.redirect('/admin');
+      }
+      res.redirect('/login');
+  });
 });
 
+
+
+// Ruta para actualizar el estado de un skater
+router.put('/admin/update/:id', async (req, res) => {
+  try {
+      const skaterId = req.params.id;
+      const newState = req.body.estado === 'true';
+      
+      await Skater.findByIdAndUpdate(skaterId, { estado: newState });
+      
+      res.status(200).send({ message: 'Estado actualizado' });
+  } catch (error) {
+      res.status(500).send({ error: 'Error al actualizar el estado' });
+  }
+});
 
 
 

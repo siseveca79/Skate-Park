@@ -12,12 +12,6 @@
         <div class="py-4">
             <h2 class="text-center">Administración</h2>
             <hr class="w-50 mx-auto">
-            <!-- Botón de logout -->
-            <div class="text-right mb-3">
-                <form action="/logout" method="POST">
-                    <button type="submit" class="btn btn-danger">Logout</button>
-                </form>
-            </div>
             <table class="table w-75 m-auto">
                 <thead class="thead-dark">
                     <tr>
@@ -38,20 +32,43 @@
                         <td>{{this.anos_experiencia}}</td>
                         <td>{{this.especialidad}}</td>
                         <td>
-                            <form action="/admin/update/{{this.id}}" method="POST">
-                                <input type="hidden" name="_method" value="PUT">
-                                <input type="checkbox" name="estado" {{#if this.estado}}checked{{/if}} onchange="this.form.submit()">
-                            </form>
+                            <input type="checkbox" data-id="{{this.id}}" name="estado" {{#if this.estado}}checked{{/if}} class="estado-checkbox">
                         </td>
                     </tr>
                     {{/each}}
                 </tbody>
             </table>
+            <form action="/logout" method="POST" class="form-container mt-3">
+                <button type="submit" class="btn btn-danger btn-block">Logout</button>
+            </form>
         </div>
     </div>
 
     <!-- Scripts de jQuery y Bootstrap -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.estado-checkbox').on('change', function() {
+                var skaterId = $(this).data('id');
+                var newState = $(this).is(':checked');
+                
+                $.ajax({
+                    url: '/admin/update/' + skaterId,
+                    method: 'PUT',
+                    data: {
+                        estado: newState
+                    },
+                    success: function(response) {
+                        console.log('Estado actualizado');
+                    },
+                    error: function(error) {
+                        console.error('Error al actualizar el estado:', error);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
