@@ -47,28 +47,29 @@
     <!-- Scripts de jQuery y Bootstrap -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        $(document).ready(function() {
-            $('.estado-checkbox').on('change', function() {
-                var skaterId = $(this).data('id');
-                var newState = $(this).is(':checked');
-                
-                $.ajax({
-                    url: '/admin/update/' + skaterId,
-                    method: 'PUT',
-                    data: {
-                        estado: newState
-                    },
-                    success: function(response) {
-                        console.log('Estado actualizado');
-                    },
-                    error: function(error) {
-                        console.error('Error al actualizar el estado:', error);
-                    }
-                });
+<script>
+    $(document).ready(function() {
+        $('.estado-checkbox').on('change', function() {
+            var skaterId = $(this).data('id');
+            var newState = $(this).is(':checked');
+            
+            $.ajax({
+                url: '/admin/update/' + skaterId,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    estado: newState
+                }),
+                success: function(response) {
+                    console.log('Estado actualizado');
+                },
+                error: function(error) {
+                    console.error('Error al actualizar el estado:', error);
+                }
             });
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>

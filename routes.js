@@ -29,7 +29,12 @@ async function authenticateToken(req, res, next) {
 
 router.get('/', async (req, res) => {
   try {
-    const skaters = await Skater.findAll();
+    console.log("Intentando obtener skaters...");
+    const skaters = await Skater.findAll({
+      order: [['estado', 'DESC']] // Ordena por estado, aprobados (true) primero
+    });
+    console.log("Skaters obtenidos de la base de datos:", skaters);
+
     res.render('index', { skaters: skaters.map(skater => skater.get({ plain: true })) });
   } catch (error) {
     console.error('Error al obtener skaters:', error);
@@ -141,11 +146,9 @@ router.get('/admin', authenticateToken, async (req, res) => {
 });
 
 // Ruta PUT para actualizar el estado de un skater por ID
-router.put('/admin/update/:id', authenticateToken, async (req, res) => {
-  if (req.user.email !== 'admin@gmail.com') return res.redirect('/profile');
-
+router.put('/admin/update/:id', async (req, res) => {
   const skaterId = req.params.id;
-  const newState = req.body.estado === 'true';
+  const newState = req.body.estado === 'true'; // Asegúrate de convertir correctamente el valor del estado
 
   try {
     const skater = await Skater.findByPk(skaterId);
@@ -155,11 +158,12 @@ router.put('/admin/update/:id', authenticateToken, async (req, res) => {
 
     skater.estado = newState;
     await skater.save();
-    res.sendStatus(200); // Respuesta exitosa
+    res.json({ message: 'Estado actualizado correctamente' });
   } catch (error) {
     console.error('Error al actualizar el estado del skater:', error);
     res.status(500).send('Error interno del servidor');
   }
 });
+
 
 module.exports = router;
