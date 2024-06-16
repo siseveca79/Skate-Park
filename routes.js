@@ -145,23 +145,24 @@ router.get('/admin', authenticateToken, async (req, res) => {
   }
 });
 
-// Ruta PUT para actualizar el estado de un skater por ID
-router.put('/admin/update/:id', async (req, res) => {
+// Ruta para actualizar el estado de un skater
+router.put('/admin/update/:id', authenticateToken, async (req, res) => {
   const skaterId = req.params.id;
-  const newState = req.body.estado === 'true'; // Asegúrate de convertir correctamente el valor del estado
+  const { estado } = req.body;
 
   try {
     const skater = await Skater.findByPk(skaterId);
     if (!skater) {
-      return res.status(404).send('Skater no encontrado');
+      return res.status(404).json({ message: 'Skater no encontrado' });
     }
 
-    skater.estado = newState;
+    skater.estado = estado;
     await skater.save();
-    res.json({ message: 'Estado actualizado correctamente' });
+
+    res.status(200).json({ message: 'Estado actualizado correctamente' });
   } catch (error) {
-    console.error('Error al actualizar el estado del skater:', error);
-    res.status(500).send('Error interno del servidor');
+    console.error('Error al actualizar el estado:', error);
+    res.status(500).json({ message: 'Error interno en el servidor' });
   }
 });
 
