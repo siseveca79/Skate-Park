@@ -11,6 +11,15 @@ npm install bcrypt@^5.1.1 body-parser@^1.20.2 cookie-parser@^1.4.6 dotenv@^16.4.
 
 # Resultados
 
+# Usuarios
+
+Para todos lo usuarios Password: Simi1935
+
+danny@gmail.com
+evelien@gmail.com
+tony@gmail.com
+admin@gmail.com
+
 ![Logo de mi proyecto](/index.png)
 
 
