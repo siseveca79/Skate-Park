@@ -1,53 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración - Skate Park</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración - Skate Park</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .form-container {
+      max-width: 800px;
+      margin: auto;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+    }
+  </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Skate Park</h1>
-        <div class="py-4">
-            <h2 class="text-center">Administración</h2>
-            <hr class="w-50 mx-auto">
-            <table class="table w-75 m-auto">
-                <thead class="thead-dark">
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Foto</th>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Años de experiencia</th>
-                        <th scope="col">Especialidad</th>
-                        <th scope="col">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#each skaters}}
-                    <tr>
-                        <th scope="row">{{@index}}</th>
-                        <td><img src="{{this.foto}}" alt="Foto de {{this.nombre}}" width="50"></td>
-                        <td>{{this.nombre}}</td>
-                        <td>{{this.anos_experiencia}}</td>
-                        <td>{{this.especialidad}}</td>
-                        <td>
-                            <input type="checkbox" data-id="{{this.id}}" name="estado" {{#if this.estado}}checked{{/if}} class="estado-checkbox">
-                        </td>
-                    </tr>
-                    {{/each}}
-                </tbody>
-            </table>
-            <form action="/logout" method="POST" class="form-container mt-3">
-                <button type="submit" class="btn btn-danger btn-block">Logout</button>
-            </form>
-        </div>
+  <div class="container mt-5">
+    <h1 class="text-center">Skate Park</h1>
+    <div class="py-4 text-center">
+      <h2>Administración</h2>
+      <hr class="w-50 mx-auto">
+      <div class="form-container">
+        <table class="table table-bordered table-striped">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Foto</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Años de experiencia</th>
+              <th scope="col">Especialidad</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each skaters}}
+            <tr>
+              <th scope="row">{{@index}}</th>
+              <td><img src="{{this.foto}}" alt="Foto de {{this.nombre}}" width="50"></td>
+              <td>{{this.nombre}}</td>
+              <td>{{this.anos_experiencia}}</td>
+              <td>{{this.especialidad}}</td>
+              <td>
+                <input type="checkbox" data-id="{{this.id}}" name="estado" {{#if this.estado}}checked{{/if}} class="estado-checkbox">
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        <form action="/logout" method="POST" class="mt-3">
+          <button type="submit" class="btn btn-danger btn-block">Logout</button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <!-- Scripts de jQuery y Bootstrap -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-<script>
+  <!-- Scripts de jQuery y Bootstrap -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+  <script>
     $(document).ready(function() {
         $('.estado-checkbox').on('change', function() {
             var skaterId = $(this).data('id');
@@ -69,7 +81,6 @@
             });
         });
     });
-</script>
-
+  </script>
 </body>
 </html>
