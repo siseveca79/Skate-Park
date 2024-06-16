@@ -2,19 +2,34 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Skater = require('./models/Skater'); // Asegúrate de importar correctamente Skater
-const { z } = require('zod');
+const Skater = require('./models/Skater');
 const loginSchema = require('./validation/loginValidation');
-const registerSchema = require('./validation/validation').registerSchema;
 const profileSchema = require('./validation/profileValidation');
-const { authenticateToken } = require('./authMiddleware');
+
+// Middleware para verificar el token JWT y los permisos de administrador
+async function authenticateToken(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.redirect('/login');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const skater = await Skater.findByPk(decoded.id);
+
+    if (!skater) {
+      return res.redirect('/login');
+    }
+
+    req.user = skater;
+    next();
+  } catch (error) {
+    console.error('Error al verificar token:', error);
+    res.redirect('/login');
+  }
+}
 
 router.get('/', async (req, res) => {
   try {
-    console.log("Intentando obtener skaters...");
     const skaters = await Skater.findAll();
-    console.log("Skaters obtenidos de la base de datos:", skaters);
-
     res.render('index', { skaters: skaters.map(skater => skater.get({ plain: true })) });
   } catch (error) {
     console.error('Error al obtener skaters:', error);
@@ -26,29 +41,18 @@ router.get('/login', (req, res) => {
   res.render('login');
 });
 
-// Ruta POST para manejar el inicio de sesión
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Validar los datos del formulario utilizando un esquema de validación
     loginSchema.parse({ email, password });
-
-    // Buscar al skater por su email en la base de datos
     const skater = await Skater.findOne({ where: { email } });
 
-    // Verificar si existe el skater y si la contraseña es correcta
     if (skater && await bcrypt.compare(password, skater.password)) {
-      // Generar un token de sesión
       const token = jwt.sign({ id: skater.id, email: skater.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-      // Establecer la cookie con el token
       res.cookie('token', token, { httpOnly: true });
-
-      // Redirigir al usuario a su perfil
-      res.redirect('/profile');
+      res.redirect(skater.email === 'admin@gmail.com' ? '/admin' : '/profile');
     } else {
-      // Si las credenciales no son válidas, redirigir de nuevo al login con un mensaje de error
       res.render('login', { error: { message: 'Credenciales incorrectas. Por favor, intente de nuevo.' } });
     }
   } catch (error) {
@@ -62,24 +66,17 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { email, nombre, password, password_repeat, anos_experiencia, especialidad } = req.body;
+  const { email, nombre, password, anos_experiencia, especialidad } = req.body;
+
+  if (!req.files || !req.files.foto) {
+    return res.status(400).send('No se ha enviado ninguna imagen.');
+  }
+
+  const foto = req.files.foto;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   try {
-    // Validar los datos del formulario utilizando el esquema de validación
-    registerSchema.parse({ email, nombre, password, password_repeat, anos_experiencia, especialidad, foto: req.files ? req.files.foto : null });
-
-    // Verifica si hay archivos adjuntos
-    if (!req.files || !req.files.foto) {
-      return res.status(400).send('No se ha enviado ninguna imagen.');
-    }
-
-    const foto = req.files.foto;
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    // Mueve el archivo al directorio deseado
     await foto.mv(`./public/uploads/${foto.name}`);
-
-    // Inserta el nuevo skater en la base de datos usando Sequelize
     await Skater.create({
       email,
       nombre,
@@ -97,7 +94,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Ruta protegida que requiere autenticación
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const skater = await Skater.findByPk(req.user.id);
@@ -108,20 +104,16 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Ruta POST para actualizar el perfil del usuario
 router.post('/profile', authenticateToken, async (req, res) => {
   const { nombre, anos_experiencia, especialidad } = req.body;
 
   try {
-    // Validar los datos del formulario utilizando el esquema de validación
     profileSchema.parse({ nombre, anos_experiencia: Number(anos_experiencia), especialidad });
-
     await Skater.update(
       { nombre, anos_experiencia: Number(anos_experiencia), especialidad },
       { where: { id: req.user.id } }
     );
 
-    // Recargar el perfil con un mensaje de éxito
     const skater = await Skater.findByPk(req.user.id);
     res.render('datos', { skater, successMessage: 'Cambios guardados con éxito.' });
   } catch (error) {
@@ -131,12 +123,14 @@ router.post('/profile', authenticateToken, async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  res.clearCookie('token'); // Borra la cookie de token
-  res.redirect('/'); // Redirige al usuario a la página principal
+  res.clearCookie('token');
+  res.redirect('/');
 });
 
 // Ruta GET para la página de administración
 router.get('/admin', authenticateToken, async (req, res) => {
+  if (req.user.email !== 'admin@gmail.com') return res.redirect('/profile');
+
   try {
     const skaters = await Skater.findAll();
     res.render('admin', { skaters });
@@ -146,73 +140,26 @@ router.get('/admin', authenticateToken, async (req, res) => {
   }
 });
 
+// Ruta PUT para actualizar el estado de un skater por ID
+router.put('/admin/update/:id', authenticateToken, async (req, res) => {
+  if (req.user.email !== 'admin@gmail.com') return res.redirect('/profile');
 
-
-
-
-
-// Ruta para manejar el logout
-router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-      if (err) {
-          return res.redirect('/admin');
-      }
-      res.redirect('/login');
-  });
-});
-
-
-
-// Ruta para actualizar el estado de un skater
-router.put('/admin/update/:id', async (req, res) => {
-  try {
-      const skaterId = req.params.id;
-      const newState = req.body.estado === 'true';
-      
-      await Skater.findByIdAndUpdate(skaterId, { estado: newState });
-      
-      res.status(200).send({ message: 'Estado actualizado' });
-  } catch (error) {
-      res.status(500).send({ error: 'Error al actualizar el estado' });
-  }
-});
-
-
-
-router.post('/admin', async (req, res) => {
-  const { id, estado } = req.body;
-  try {
-    await Skater.update({ estado }, { where: { id } });
-    res.redirect('/admin');
-  } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).send("Error interno en el servidor");
-  }
-});
-
-// Middleware para redirigir a admin.handlebars si el usuario es admin
-async function redirectAdmin(req, res, next) {
-  const token = req.cookies.token;
-  if (!token) return res.redirect('/login');
+  const skaterId = req.params.id;
+  const newState = req.body.estado === 'true';
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const skater = await Skater.findByPk(decoded.id);
-
+    const skater = await Skater.findByPk(skaterId);
     if (!skater) {
-      return res.redirect('/login');
+      return res.status(404).send('Skater no encontrado');
     }
 
-    // Redirigir a admin.handlebars si es admin
-    if (skater.email === 'admin@gmail.com') {
-      return res.redirect('/admin');
-    }
-
-    next();
+    skater.estado = newState;
+    await skater.save();
+    res.sendStatus(200); // Respuesta exitosa
   } catch (error) {
-    console.error('Error al verificar token:', error);
-    res.redirect('/login');
+    console.error('Error al actualizar el estado del skater:', error);
+    res.status(500).send('Error interno del servidor');
   }
-}
+});
 
 module.exports = router;

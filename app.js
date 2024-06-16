@@ -7,38 +7,29 @@ const { create } = require('handlebars');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const path = require('path');
-const methodOverride = require('method-override');
 const cookieParser = require('cookie-parser');
+const methodOverride = require('method-override'); // Para soportar métodos PUT y DELETE en formularios
 const sequelize = require('./config/database');
 const Skater = require('./models/Skater'); // Importa el modelo Skater
 const routes = require('./routes');
 const loginSchema = require('./validation/loginValidation'); // Importa la validación de login
 const profileSchema = require('./validation/profileValidation'); // Importa la validación del perfil
-const { authenticateToken } = require('./authMiddleware');
 
 const app = express();
 
-
-
-app.use(methodOverride('_method'));
 // Configuración de middlewares
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(fileUpload());
 app.use(express.static(path.join(__dirname, 'public')));
-// Middleware para sobrescribir métodos HTTP
-app.use(methodOverride('_method'));
-
-
+app.use(methodOverride('_method')); // Permite usar métodos PUT y DELETE en formularios
 
 // Configuración de Handlebars
 const hbs = create({
   allowProtoMethodsByDefault: true,
   allowProtoPropertiesByDefault: true,
 });
-
-
 
 app.engine('handlebars', engine({
   handlebars: hbs,
@@ -69,6 +60,27 @@ sequelize.sync({ alter: true })
     console.error('Error al sincronizar modelos con la base de datos:', error);
   });
 
+// Middleware para verificar el token JWT y los permisos de administrador
+async function authenticateToken(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.redirect('/login');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const skater = await Skater.findByPk(decoded.id);
+
+    if (!skater) {
+      return res.redirect('/login');
+    }
+
+    req.user = skater;
+    next();
+  } catch (error) {
+    console.error('Error al verificar token:', error);
+    res.redirect('/login');
+  }
+}
+
 // Middleware para redirigir a admin.handlebars si el usuario es admin
 async function redirectAdmin(req, res, next) {
   const token = req.cookies.token;
@@ -87,7 +99,6 @@ async function redirectAdmin(req, res, next) {
       return res.redirect('/admin');
     }
 
-    req.user = skater;
     next();
   } catch (error) {
     console.error('Error al verificar token:', error);
@@ -170,12 +181,18 @@ app.post('/register', async (req, res) => {
 });
 
 // Ruta para ver el perfil del usuario
-app.get('/profile', redirectAdmin, authenticateToken, async (req, res) => {
+app.get('/profile', redirectAdmin, authenticateToken, (req, res) => {
   try {
     const { id, email, nombre } = req.user;
-    const skater = await Skater.findByPk(id);
-    if (!skater) throw new Error('Skater no encontrado');
-    res.render('datos', { skater: skater.get({ plain: true }) });
+    Skater.findByPk(id)
+      .then(skater => {
+        if (!skater) throw new Error('Skater no encontrado');
+        res.render('datos', { skater: skater.get({ plain: true }) });
+      })
+      .catch(error => {
+        console.error("Error al obtener perfil:", error);
+        res.status(500).send("Error interno en el servidor");
+      });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     res.status(500).send("Error interno en el servidor");
@@ -204,7 +221,7 @@ app.post('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Ruta para manejar el logout
+// Agregar esta ruta para manejar el logout
 app.post('/logout', (req, res) => {
   res.clearCookie('token'); // Borra la cookie de token
   res.redirect('/'); // Redirige al usuario a la página principal

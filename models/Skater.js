@@ -1,6 +1,5 @@
-// models/Skater.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // Importa la configuración de la base de datos
+const sequelize = require('../config/database');
 
 const Skater = sequelize.define('Skater', {
     email: {
@@ -31,10 +30,10 @@ const Skater = sequelize.define('Skater', {
     estado: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true
+        defaultValue: false
     }
 }, {
-    timestamps: false // Desactiva timestamps si no tienes las columnas createdAt y updatedAt
+    timestamps: false // Desactiva timestamps
 });
 
 module.exports = Skater;
